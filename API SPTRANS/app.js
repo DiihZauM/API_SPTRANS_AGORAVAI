@@ -43,13 +43,13 @@ async function obterPrevisao(pontoParada) {
       let data = await response.json();
        JSON.stringify(data, null, 2);
 
-      // Se a resposta for um objeto, converter para array
+      
       if (!data || !data.p || !data.p.l) {
         console.error("❌ Erro: Estrutura do JSON inválida");
         return null;
     }
 
-    // Extraindo os valores necessários com segurança
+ 
    
 
     const { py, px, l: linhas } = data.p;
@@ -58,9 +58,9 @@ const resultado = {
     py,
     px,
     linhas: linhas.map(linha => {
-        console.log(`🔍 Linha ${linha.c} - Veículos recebidos:`, JSON.stringify(linha.vs, null, 2)); // Exibe os veículos corretamente
+        console.log(`🔍 Linha ${linha.c} - Veículos recebidos:`, JSON.stringify(linha.vs, null, 2)); 
 
-        const primeiroVeiculo = linha.vs?.[0] ?? null; // Pega o primeiro veículo, se existir
+        const primeiroVeiculo = linha.vs?.[0] ?? null; 
 
         const objLinha = {
             c: linha.c,
@@ -73,13 +73,13 @@ const resultado = {
                 : { p: "N/A", t: "Sem veículos disponíveis" }
         };
 
-        console.log(`✅ Linha Processada (${linha.c}):`, JSON.stringify(objLinha, null, 2)); // Exibe corretamente cada linha
+        console.log(`✅ Linha Processada (${linha.c}):`, JSON.stringify(objLinha, null, 2)); 
 
         return objLinha;
     })
 };
 
-// 🔥 **Correção do problema do [Object]**
+
 console.log("🚍 Dados filtrados (Final):", JSON.stringify(resultado, null, 2));
 
 return resultado;
@@ -94,5 +94,5 @@ return resultado;
       return null;
   }
 }
-// Exemplo de uso: Informe o código do ponto de parada (substitua pelo real)
+
 obterPrevisao(120015817);
