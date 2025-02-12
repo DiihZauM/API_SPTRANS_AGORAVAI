@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscar Paradas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px;
+            margin-right: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Estilos do contêiner de resultados */
+        #resultado {
+            display: flex;
+            flex-wrap: wrap; /* Flexível, para mostrar todos os resultados na tela */
+            justify-content: space-between; /* Espaço entre os cards */
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 5px;
+            gap: 20px;
+            box-sizing: border-box;
+            max-height: 80vh; /* Limita a altura */
+            overflow-y: auto; /* Permite rolar caso os resultados ocupem muito espaço */
+        }
+
+        /* Estilo para cada card de parada */
+        .parada {
+            width: calc(33% - 20px); /* 3 colunas de tamanho ajustado */
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .parada:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .parada h3 {
+            margin-top: 0;
+        }
+
+        /* Responsivo para telas menores */
+        @media (max-width: 768px) {
+            .parada {
+                width: calc(50% - 20px); /* 2 colunas para telas menores */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .parada {
+                width: 100%; /* 1 coluna para telas muito pequenas */
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Buscar Paradas</h1>
+    <div style="text-align: center;">
+        <input type="text" id="nomeRua" placeholder="Digite o nome da rua">
+        <button onclick="buscarParadas()">Buscar Paradas</button>
+    </div>
+
+    <div id="resultado"></div>
+
+    <script>
+        async function buscarParadas() {
+            const nomeRua = document.getElementById('nomeRua').value;
+
+            if (!nomeRua) {
+                alert("Por favor, digite o nome de uma rua.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3000/paradas?nomeRua=${nomeRua}`);
+                const data = await response.json();
+
+                console.log("Dados das paradas:", data);
+
+                if (data.erro) {
+                    alert(data.erro);
+                    return;
+                }
+
+                // Exibindo os dados na página
+                const resultadoDiv = document.getElementById('resultado');
+                resultadoDiv.innerHTML = ''; // Limpa qualquer conteúdo anterior
+
+                if (data && data.length > 0) {
+                    data.forEach(parada => {
+                        const paradaDiv = document.createElement('div');
+                        paradaDiv.classList.add('parada');
+                        paradaDiv.innerHTML = `
+                            <h3>${parada.np || "Nome não disponível"}</h3>
+                            <p><strong>Ponto de Referência:</strong> ${parada.ed || "Ponto de referência não disponível"}</p>
+                        `;
+                        resultadoDiv.appendChild(paradaDiv);
+                    });
+                } else {
+                    resultadoDiv.innerHTML = 'Nenhuma parada encontrada.';
+                }
+            } catch (error) {
+                console.error("Erro ao buscar paradas:", error);
+                alert("Erro ao buscar paradas.");
+            }
+        }
+    </script>
+</body>
+</html>

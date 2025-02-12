@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Próximos Ônibus</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        select, input, button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        input {
+            width: 250px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #resultado {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .card {
+            background: white;
+            padding: 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            width: 80%;
+            max-width: 400px;
+            text-align: left;
+        }
+        .card strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+        #pesquisaPersonalizada {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Próximos Ônibus</h1>
+    
+    <label for="pontoParada">Escolha um ponto:</label>
+    <select id="pontoParada" onchange="togglePesquisa()">
+        <option value="">Selecione um ponto</option>
+        <option value="660015831">House</option>
+        <option value="120015840">Shop. Raposo B/C</option>
+        <option value="120015820">Shop. Raposo C/B</option>
+        <option value="120011451">R. MMDC/ METRO BUTANTÃ</option>
+        <option value="340015382">Ponto pra ver o 477P</option>
+        <option value="personalizado">🔍 Personalizado</option>
+    </select>
+
+    <div id="pesquisaPersonalizada">
+        <p>Digite o código da parada:</p>
+        <input type="text" id="codigoParada" placeholder="Ex: 123456789">
+    </div>
+
+    <button onclick="buscarPrevisao()">Buscar</button>
+
+    <div id="resultado"></div>
+
+    <script>
+        function togglePesquisa() {
+            const select = document.getElementById('pontoParada');
+            const pesquisaDiv = document.getElementById('pesquisaPersonalizada');
+            
+            if (select.value === "personalizado") {
+                pesquisaDiv.style.display = "block";
+            } else {
+                pesquisaDiv.style.display = "none";
+            }
+        }
+
+        async function buscarPrevisao() {
+            let paradaId = document.getElementById('pontoParada').value;
+            const codigoParada = document.getElementById('codigoParada').value.trim();
+
+            if (paradaId === "personalizado") {
+                if (!codigoParada || isNaN(codigoParada)) {
+                    alert("Digite um código de parada válido.");
+                    return;
+                }
+                paradaId = codigoParada;
+            }
+
+            if (!paradaId) {
+                alert("Escolha um ponto ou digite um código de parada.");
+                return;
+            }
+
+            const url = `http://localhost:3000/proximos-onibus?paradaId=${paradaId}`;
+
+            try {
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`Erro ao buscar dados (${response.status})`);
+                }
+
+                const data = await response.json();
+                console.log("Dados recebidos:", data);
+
+                const resultadoDiv = document.getElementById('resultado');
+                resultadoDiv.innerHTML = '';
+
+                if (!data || !data.linhas || data.linhas.length === 0) {
+                    resultadoDiv.innerHTML = '<p>Nenhum ônibus encontrado.</p>';
+                    return;
+                }
+
+                let chegadas = [];
+
+                data.linhas.forEach(linha => {
+                    linha.veiculos.forEach(veiculo => {
+                        chegadas.push({
+                            linha: linha.c,
+                            destino: linha.lt,
+                            veiculo: veiculo.numero,
+                            chegada: veiculo.chegada.includes("Chegando") ? 0 : parseInt(veiculo.chegada.replace(" min", "")) || 9999
+                        });
+                    });
+                });
+
+                chegadas.sort((a, b) => a.chegada - b.chegada);
+
+                chegadas.forEach(chegada => {
+                    const card = document.createElement('div');
+                    card.classList.add('card');
+                    card.innerHTML = `
+                        <strong>Linha:</strong> ${chegada.linha} (${chegada.destino})<br>
+                        <strong>Veículo:</strong> ${chegada.veiculo}<br>
+                        <strong>Chegada em:</strong> ${chegada.chegada === 0 ? "Chegando agora" : `${chegada.chegada} min`}
+                    `;
+                    resultadoDiv.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error("Erro ao buscar previsão:", error);
+                alert("Erro ao buscar previsão dos ônibus.");
+            }
+        }
+    </script>
+</body>
+</html>

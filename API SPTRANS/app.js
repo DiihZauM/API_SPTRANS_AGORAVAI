@@ -1,5 +1,6 @@
-require("dotenv").config
+require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 
 
 const app = express();
@@ -104,53 +105,31 @@ async function obterPrevisao(pontoParada) {
 obterPrevisao(660010587);
 
 
-app.get("/paradas", async (req, res) => {
-    try {
-        const termosBusca = req.query.termosBusca;
-        console.log(cookies);
-
-        if (!termosBusca) {
-            return res.status(400).json({ erro: "Termos de busca são necessários" });
-        }
-
-        // Chama a API SPTrans para buscar paradas
-        const response = await fetch(
-            `${API_URL}/Parada/Buscar?termosBusca=${encodeURIComponent(termosBusca)}`,
-            {
-                method: "GET",
-                headers: {
-                    "Cookie": cookies
-                }
-            }
-        );
-
-        if (!response.ok) {
-            const errorMsg = `Erro na requisição: ${response.status} ${response.statusText}`;
-            console.error(errorMsg);
-            return res.status(500).json({ erro: errorMsg });
-        }
-
-        const data = await response.json();
-        console.log("Dados recebidos da SPTrans:", data);
-
-        if (!data || data.length === 0) {
-            return res.status(404).json({ erro: "Nenhuma parada encontrada" });
-        }
-
-        // Exibe as paradas com nome, latitude e longitude
-        const paradas = data.map(parada => ({
-            nome: parada.nome,
-            latitude: parada.latitude,
-            longitude: parada.longitude
-        }));
-
-        res.json(paradas);
-    } catch (error) {
-        console.error("Erro ao buscar paradas:", error.message);
-        res.status(500).json({ erro: "Erro ao buscar paradas" });
+app.get("/proximos-onibus", async (req, res) => {
+    const { paradaId } = req.query; // Recebe o ID da parada a partir da query string
+  
+    if (!paradaId) {
+      return res.status(400).json({ erro: "O ID da parada é necessário." });
     }
-});
+  
+    const previsao = await obterPrevisao(paradaId);
+  
+    if (!previsao) {
+      return res.status(500).json({ erro: "Erro ao obter dados dos ônibus." });
+    }
+  
+    const resultado = previsao.p.l.map((linha) => ({
+      linha: linha.c,
+      veiculos: linha.vs.map((veiculo) => ({
+        numero: veiculo.p || "N/A",
+        chegada: veiculo.t || "N/A",
+      })),
+    }));
+  
+    res.json(resultado);
+  });
+  
+  app.listen(PORT, () => {
+    console.log(`Servidor rodando em http://localhost:${PORT}`);
+  });
 
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
-});
