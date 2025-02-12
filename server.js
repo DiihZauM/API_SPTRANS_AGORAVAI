@@ -1,6 +1,7 @@
 // Importando dependências
 const express = require("express");
 const cors = require("cors");
+const path = require('path');
 
 require("dotenv").config();
 
@@ -12,6 +13,13 @@ let cookies = "";
 
 // Configurando CORS para permitir requisições de qualquer origem
 app.use(cors()); // Permitir requisições de qualquer origem
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Rota para servir o HTML principal
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'proximos_onibus.html'));
+});
 
 // Função de autenticação
 async function autenticar() {
