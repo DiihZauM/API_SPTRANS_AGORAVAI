@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscar Paradas</title>
+</head>
+<body>
+    <h1>Buscar Paradas por Nome de Rua</h1>
+    <input type="text" id="termosBusca" placeholder="Digite o nome da rua ou termo de busca">
+    <button onclick="buscarParadas()">Buscar Paradas</button>
+
+    <div id="resultados"></div>
+
+    <script>
+        async function buscarParadas() {
+            const termosBusca = document.getElementById("termosBusca").value;
+            const resultadosDiv = document.getElementById("resultados");
+
+            if (!termosBusca) {
+                resultadosDiv.innerHTML = "Por favor, insira o nome de uma rua ou termo de busca.";
+                return;
+            }
+
+            try {
+                const response = await fetch(`/paradas?termosBusca=${termosBusca}`);
+                const paradas = await response.json();
+
+                if (paradas.length === 0) {
+                    resultadosDiv.innerHTML = "Nenhuma parada encontrada.";
+                    return;
+                }
+
+                // Exibe os resultados
+                const listaParadas = paradas.map(parada => `
+                    <p><strong>${parada.nome}</strong> - Latitude: ${parada.latitude}, Longitude: ${parada.longitude}</p>
+                `).join("");
+
+                resultadosDiv.innerHTML = listaParadas;
+            } catch (error) {
+                console.error("Erro ao buscar paradas:", error);
+                resultadosDiv.innerHTML = "Erro ao buscar paradas.";
+            }
+        }
+    </script>
+</body>
+</html>

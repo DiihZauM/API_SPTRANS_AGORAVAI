@@ -6,10 +6,12 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "Diogo Anjos",
   "license": "ISC",
-  "description": "",
   "dependencies": {
-    "dotenv": "^16.4.7"
-  }
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "fetch": "^1.1.0"
+  },
+  "description": ""
 }

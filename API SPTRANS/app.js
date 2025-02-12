@@ -1,5 +1,9 @@
-require('dotenv').config
+require("dotenv").config
+const express = require("express");
 
+
+const app = express();
+const PORT = 3000;
 const API_URL = "https://api.olhovivo.sptrans.com.br/v2.1";
 const TOKEN = process.env.sptrans_token; 
 let cookies= "";
@@ -51,43 +55,45 @@ async function obterPrevisao(pontoParada) {
 
  
    
-
     const { py, px, l: linhas } = data.p;
 
-const resultado = {
-    py,
-    px,
-    linhas: linhas.map(linha => {
-        console.log(`🔍 Linha ${linha.c} - Veículos recebidos:`, JSON.stringify(linha.vs, null, 2)); 
-
-        const primeiroVeiculo = linha.vs?.[0] ?? null; 
-
-        const objLinha = {
-            c: linha.c,
-            lt: linha.sl === 2 ? linha.lt1 : linha.lt0,
-            veiculo: primeiroVeiculo
-                ? {
-                    p: primeiroVeiculo.p || "N/A",
-                    t: primeiroVeiculo.t || "Sem previsão"
-                }
-                : { p: "N/A", t: "Sem veículos disponíveis" }
-        };
-
-        console.log(`✅ Linha Processada (${linha.c}):`, JSON.stringify(objLinha, null, 2)); 
-
-        return objLinha;
-    })
-};
-
-
-console.log("🚍 Dados filtrados (Final):", JSON.stringify(resultado, null, 2));
-
-return resultado;
-      
-
-
-    console.log("🚍 Dados filtrados:", resultado);
+    const calcularTempoChegada = (horario) => {
+        if (!horario) return "Sem previsão";
+    
+        const agora = new Date();
+        const [horas, minutos] = horario.split(":").map(Number);
+        const horarioPrevisto = new Date(agora);
+        horarioPrevisto.setHours(horas, minutos, 0, 0);
+    
+        const diffMs = horarioPrevisto - agora;
+        const diffMinutos = Math.round(diffMs / 60000); // Converte ms para minutos
+    
+        return diffMinutos > 0 ? `${diffMinutos} min` : "Chegando agora";
+    };
+    
+    const resultado = {
+        py,
+        px,
+        linhas: linhas.map(linha => {
+            const veiculos = linha.vs?.slice(0, 3).map(veiculo => ({
+                numero: veiculo.p || "N/A",
+                chegada: calcularTempoChegada(veiculo.t) // 🔥 Agora exibe só a "chegada"
+            })) || [];
+    
+            return {
+                c: linha.c,
+                lt: linha.sl === 2 ? linha.lt1 : linha.lt0,
+                veiculos: veiculos.length > 0 ? veiculos : [{ numero: "N/A", chegada: "N/A" }]
+            };
+        })
+    };
+    
+    // 🔥 Exibe o JSON formatado corretamente
+    console.log("🚍 Dados filtrados (Final):", JSON.stringify(resultado, null, 2));
+    
     return resultado;
+
+
 
   } catch (error) {
       console.error("Erro ao obter previsão:", error.message);
@@ -95,4 +101,56 @@ return resultado;
   }
 }
 
-obterPrevisao(120015817);
+obterPrevisao(660010587);
+
+
+app.get("/paradas", async (req, res) => {
+    try {
+        const termosBusca = req.query.termosBusca;
+        console.log(cookies);
+
+        if (!termosBusca) {
+            return res.status(400).json({ erro: "Termos de busca são necessários" });
+        }
+
+        // Chama a API SPTrans para buscar paradas
+        const response = await fetch(
+            `${API_URL}/Parada/Buscar?termosBusca=${encodeURIComponent(termosBusca)}`,
+            {
+                method: "GET",
+                headers: {
+                    "Cookie": cookies
+                }
+            }
+        );
+
+        if (!response.ok) {
+            const errorMsg = `Erro na requisição: ${response.status} ${response.statusText}`;
+            console.error(errorMsg);
+            return res.status(500).json({ erro: errorMsg });
+        }
+
+        const data = await response.json();
+        console.log("Dados recebidos da SPTrans:", data);
+
+        if (!data || data.length === 0) {
+            return res.status(404).json({ erro: "Nenhuma parada encontrada" });
+        }
+
+        // Exibe as paradas com nome, latitude e longitude
+        const paradas = data.map(parada => ({
+            nome: parada.nome,
+            latitude: parada.latitude,
+            longitude: parada.longitude
+        }));
+
+        res.json(paradas);
+    } catch (error) {
+        console.error("Erro ao buscar paradas:", error.message);
+        res.status(500).json({ erro: "Erro ao buscar paradas" });
+    }
+});
+
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+});
