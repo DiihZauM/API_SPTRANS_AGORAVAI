@@ -21,31 +21,67 @@
             color: #ffffff;
         }
 
-        /* Botão de modo escuro */
-        button#toggle-dark-mode {
+        /* Menu lateral */
+        .menu {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: #000;
-            color: #fff;
+            top: 0;
+            left: -250px;
+            width: 200px;
+            height: 100%;
+            background: #333;
+            color: white;
+            padding-top: 100px;
+            transition: 0.3s;
+        }
+        .menu a, .menu button {
+            display: block;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            background: none;
             border: none;
-            padding: 12px 18px;
+            
+            text-align: left;
             cursor: pointer;
-            border-radius: 100px;
-            z-index: 1000;
+        }
+        .menu a:hover, .menu button:hover {
+            background: #575757;
+        }
+        .menu-toggle {
+            position: fixed;
+            top: 1px;
+            left: 8px;
+            background: #333;
+            color: white;
+            border: none;
+            padding: 8px 10px;
+            cursor: pointer;
+            font-size: 18px;
+            border-radius: 10px;
+        }
+        .menu.open {
+            left: 0;
+        }
+        .close-menu {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
         }
 
-        body.dark-mode button#toggle-dark-mode {
-            background-color: #fff;
-            color: #000;
+        h1 {
+            color: #333;
         }
 
-        /* Campos de pesquisa */
-        select, input {
+        select, input, button {
             padding: 10px;
             margin: 5px;
             font-size: 16px;
-            border-radius: 20px;
         }
 
         input {
@@ -53,9 +89,6 @@
         }
 
         button {
-            padding: 10px;
-            margin: 5px;
-            font-size: 16px;
             background-color: #28a745;
             color: white;
             border: none;
@@ -77,15 +110,107 @@
             background: white;
             padding: 15px;
             margin: 5px 0;
-            border-radius:15px;
+            border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             width: 80%;
             max-width: 400px;
             text-align: left;
         }
 
-        
+        .card strong {
+            display: block;
+            margin-bottom: 5px;
+        }
 
+        .toggle-dark-mode {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #444;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .dark-mode-switch {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #444;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        input:checked + .slider {
+            background-color: #444;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .mode-icons {
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+        }
+        .mode-icons span {
+            transition: opacity 0.3s;
+        }
+        .mode-icons .sun {
+            opacity: 1;
+        }
+        .mode-icons .moon {
+            opacity: 0.3;
+        }
+        body.dark-mode .mode-icons .sun {
+            opacity: 0.3;
+        }
+        body.dark-mode .mode-icons .moon {
+            opacity: 1;
+        }
+
+
+        
+        /*resolve o bug do modo noturno*/
         body.dark-mode .card {
             background-color: #333;
             color: #fff;
@@ -97,17 +222,35 @@
 
         @media (max-width: 600px) {
             button#toggle-dark-mode {
-                bottom: 20px;
-                right: 20px;
+                bottom: 30px;
+                right: 30px;
                 padding: 8px 12px;
                 font-size: 14px;
+                
             }
         }
         
     </style>
 </head>
 <body>
-    <button id="toggle-dark-mode">🌙 </button>
+    <button class="menu-toggle">☰ </button>
+    <div class="menu" id="sideMenu">
+        <button class="close-menu">✖</button>
+        <h5>Modo Noturno:</h5>
+        <div class="dark-mode-switch">
+            <span class="mode-icons">
+                <span class="sun"><pre>☀️ </pre>  </span>
+            </span>
+            <label class="switch">
+                <input type="checkbox" id="toggle-dark-mode">
+                <span class="slider"></span>
+            </label>
+            <span class="mode-icons">
+                <span class="moon"> <pre> 🌙</pre></span>
+            </span>
+        </div>
+    </div>
+    
     <h1>Próximos Ônibus</h1>
     
     <label for="pontoParada">Escolha um ponto:</label>
@@ -133,22 +276,33 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            const toggleButton = document.getElementById("toggle-dark-mode");
+           
+            const menu = document.getElementById("sideMenu");
+            const menuToggle = document.querySelector(".menu-toggle");
+            const closeMenu = document.querySelector(".close-menu");
+            const toggleDarkMode = document.getElementById("toggle-dark-mode");
             const body = document.body;
+            // Menu lateral
+            menuToggle.addEventListener("click", function () {
+                menu.classList.toggle("open");
+            });
 
+            closeMenu.addEventListener("click", function () {
+                menu.classList.remove("open");
+            });
+
+            // Modo Noturno
             if (localStorage.getItem("dark-mode") === "enabled") {
                 body.classList.add("dark-mode");
-                toggleButton.textContent = "☀️ ";
+                toggleDarkMode.checked = true;
             }
 
-            toggleButton.addEventListener("click", function () {
+            toggleDarkMode.addEventListener("change", function () {
                 body.classList.toggle("dark-mode");
                 if (body.classList.contains("dark-mode")) {
                     localStorage.setItem("dark-mode", "enabled");
-                    toggleButton.textContent = "☀️ ";
                 } else {
                     localStorage.setItem("dark-mode", "disabled");
-                    toggleButton.textContent = "🌙 ";
                 }
             });
         });
@@ -158,7 +312,7 @@
             const pesquisaDiv = document.getElementById('pesquisaPersonalizada');
             pesquisaDiv.style.display = select.value === "personalizado" ? "block" : "none";
         }
-
+  
         async function buscarPrevisao() {
             let paradaId = document.getElementById('pontoParada').value;
             const codigoParada = document.getElementById('codigoParada').value.trim();
