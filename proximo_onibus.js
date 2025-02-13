@@ -7,7 +7,7 @@ const cors = require('cors');
 const app = express();
 const PORT = 3000;
 const API_URL = "https://api.olhovivo.sptrans.com.br/v2.1";
-const TOKEN = "edb459be1918b85e5aa144dd60a1f109e01c08e4372c51f9f4beaf16ceefba20";  // Substitua pelo seu token
+const TOKEN = process.env.sptrans_token;  // Substitua pelo seu token
 let cookies = "";
 
 // Habilitar CORS para aceitar requisições do frontend (qualquer origem por enquanto)

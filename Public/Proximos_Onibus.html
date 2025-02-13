@@ -6,58 +6,108 @@
     <title>Próximos Ônibus</title>
     <style>
         body {
+            background-color: #ffffff;
+            color: #000000;
+            transition: background-color 0.3s, color 0.3s;
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
             text-align: center;
             margin: 0;
             padding: 20px;
         }
-        h1 {
-            color: #333;
+
+        /* Modo escuro */
+        body.dark-mode {
+            background-color: #121212;
+            color: #ffffff;
         }
-        select, input, button {
+
+        /* Botão de modo escuro */
+        button#toggle-dark-mode {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            padding: 12px 18px;
+            cursor: pointer;
+            border-radius: 100px;
+            z-index: 1000;
+        }
+
+        body.dark-mode button#toggle-dark-mode {
+            background-color: #fff;
+            color: #000;
+        }
+
+        /* Campos de pesquisa */
+        select, input {
             padding: 10px;
             margin: 5px;
             font-size: 16px;
+            border-radius: 20px;
         }
+
         input {
             width: 250px;
         }
+
         button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
             background-color: #28a745;
             color: white;
             border: none;
             cursor: pointer;
         }
+
         button:hover {
             background-color: #218838;
         }
+
         #resultado {
             display: flex;
             flex-direction: column;
             align-items: center;
             margin-top: 20px;
         }
+
         .card {
             background: white;
             padding: 15px;
             margin: 5px 0;
-            border-radius: 8px;
+            border-radius:15px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             width: 80%;
             max-width: 400px;
             text-align: left;
         }
-        .card strong {
-            display: block;
-            margin-bottom: 5px;
+
+        
+
+        body.dark-mode .card {
+            background-color: #333;
+            color: #fff;
         }
+
         #pesquisaPersonalizada {
             display: none;
         }
+
+        @media (max-width: 600px) {
+            button#toggle-dark-mode {
+                bottom: 20px;
+                right: 20px;
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+        }
+        
     </style>
 </head>
 <body>
+    <button id="toggle-dark-mode">🌙 </button>
     <h1>Próximos Ônibus</h1>
     
     <label for="pontoParada">Escolha um ponto:</label>
@@ -82,15 +132,31 @@
     <div id="resultado"></div>
 
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const toggleButton = document.getElementById("toggle-dark-mode");
+            const body = document.body;
+
+            if (localStorage.getItem("dark-mode") === "enabled") {
+                body.classList.add("dark-mode");
+                toggleButton.textContent = "☀️ ";
+            }
+
+            toggleButton.addEventListener("click", function () {
+                body.classList.toggle("dark-mode");
+                if (body.classList.contains("dark-mode")) {
+                    localStorage.setItem("dark-mode", "enabled");
+                    toggleButton.textContent = "☀️ ";
+                } else {
+                    localStorage.setItem("dark-mode", "disabled");
+                    toggleButton.textContent = "🌙 ";
+                }
+            });
+        });
+
         function togglePesquisa() {
             const select = document.getElementById('pontoParada');
             const pesquisaDiv = document.getElementById('pesquisaPersonalizada');
-            
-            if (select.value === "personalizado") {
-                pesquisaDiv.style.display = "block";
-            } else {
-                pesquisaDiv.style.display = "none";
-            }
+            pesquisaDiv.style.display = select.value === "personalizado" ? "block" : "none";
         }
 
         async function buscarPrevisao() {
@@ -114,13 +180,8 @@
 
             try {
                 const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`Erro ao buscar dados (${response.status})`);
-                }
-
+                if (!response.ok) throw new Error(`Erro ao buscar dados (${response.status})`);
                 const data = await response.json();
-                console.log("Dados recebidos:", data);
 
                 const resultadoDiv = document.getElementById('resultado');
                 resultadoDiv.innerHTML = '';
@@ -131,33 +192,28 @@
                 }
 
                 let chegadas = [];
-
                 data.linhas.forEach(linha => {
                     linha.veiculos.forEach(veiculo => {
                         chegadas.push({
                             linha: linha.c,
                             destino: linha.lt,
-                            veiculo: veiculo.numero,
+                            veiculo: veiculo.numero.replace(/(\d)(?=\d{4}$)/, "$1 "),
                             chegada: veiculo.chegada.includes("Chegando") ? 0 : parseInt(veiculo.chegada.replace(" min", "")) || 9999
                         });
                     });
                 });
 
                 chegadas.sort((a, b) => a.chegada - b.chegada);
-
                 chegadas.forEach(chegada => {
                     const card = document.createElement('div');
                     card.classList.add('card');
                     card.innerHTML = `
                         <strong>Linha:</strong> ${chegada.linha} (${chegada.destino})<br>
                         <strong>Veículo:</strong> ${chegada.veiculo}<br>
-                        <strong>Chegada em:</strong> ${chegada.chegada === 0 ? "Chegando agora" : `${chegada.chegada} min`}
-                    `;
+                        <strong>Chegada em:</strong> ${chegada.chegada === 0 ? "Chegando agora" : `${chegada.chegada} min`}`;
                     resultadoDiv.appendChild(card);
                 });
-
             } catch (error) {
-                console.error("Erro ao buscar previsão:", error);
                 alert("Erro ao buscar previsão dos ônibus.");
             }
         }

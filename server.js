@@ -8,7 +8,7 @@ require("dotenv").config();
 const app = express();
 const PORT = 3000;
 const API_URL = "https://api.olhovivo.sptrans.com.br/v2.1";
-const TOKEN = "edb459be1918b85e5aa144dd60a1f109e01c08e4372c51f9f4beaf16ceefba20"; // Substitua com seu token válido
+const TOKEN = process.env.sptrans_token; // Substitua com seu token válido
 let cookies = "";
 
 // Configurando CORS para permitir requisições de qualquer origem
