@@ -1,0 +1,5 @@
+sptrans_token = "edb459be1918b85e5aa144dd60a1f109e01c08e4372c51f9f4beaf16ceefba20";
+
+IP_Producao = "http://191.234.180.131:3000"
+
+IP_Local = "http://localhost:3000"

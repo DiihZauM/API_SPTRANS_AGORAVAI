@@ -2,14 +2,20 @@
 const express = require("express");
 const cors = require("cors");
 const path = require('path');
+const mongoose = require('mongoose');
+const Stop = require('./stopModel');
 
 require("dotenv").config();
 
 const app = express();
 const PORT = 3000;
 const API_URL = "https://api.olhovivo.sptrans.com.br/v2.1";
-const TOKEN = process.env.sptrans_token; // Substitua com seu token válido
+const TOKEN = "edb459be1918b85e5aa144dd60a1f109e01c08e4372c51f9f4beaf16ceefba20"; // Substitua com seu token válido
 let cookies = "";
+
+mongoose.connect('mongodb://localhost:27017/transport', { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log("Conectado ao MongoDB"))
+    .catch((err) => console.error("Erro ao conectar:", err));
 
 // Configurando CORS para permitir requisições de qualquer origem
 app.use(cors()); // Permitir requisições de qualquer origem
@@ -20,6 +26,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'proximos_onibus.html'));
 });
+
 
 // Função de autenticação
 async function autenticar() {
@@ -33,7 +40,16 @@ async function autenticar() {
         const isAuthenticated = await response.json();
 
         if (isAuthenticated) {
-            console.log("Autenticado com sucesso!");
+          
+            const agora = new Date();
+            const horas = agora.getHours().toString().padStart(2, '0');
+            const minutos = agora.getMinutes().toString().padStart(2, '0');
+            const segundos = agora.getSeconds().toString().padStart(2, '0');
+          
+            
+          
+          console.log(`Autenticado com sucesso! ${horas}:${minutos}:${segundos}`);
+        
         } else {
             console.log("Falha na autenticação.");
         }
@@ -96,7 +112,12 @@ async function obterPrevisao(pontoParada) {
   
       // Verificando se a estrutura dos dados é válida
       if (!data || !data.p || !data.p.l) {
-        console.error("❌ Erro: Estrutura do JSON inválida");
+        const ja = new Date();
+        const horas = ja.getHours().toString().padStart(2, '0');
+        const minutos = ja.getMinutes().toString().padStart(2, '0');
+        const segundos = ja.getSeconds().toString().padStart(2, '0');
+        
+        console.error(`${horas}:${minutos} não há previsão para esse ponto`);
         return null;
       }
   

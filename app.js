@@ -1,135 +1,62 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
+const express = require('express');
+const mongoose = require('mongoose');
+const fs = require('fs');
+const Stop = require('./models/stopModel');
+const stopRoutes = require('./routes/stopRoutes');
 
-
+// Inicializando o aplicativo Express
 const app = express();
-const PORT = 3000;
-const API_URL = "https://api.olhovivo.sptrans.com.br/v2.1";
-const TOKEN = process.env.sptrans_token; 
-let cookies= "";
+const port = 3000;
 
-async function autenticar() {
-    const response = await fetch(`${API_URL}/Login/Autenticar?token=${TOKEN}`, {
-        method: "POST",
-        credentials: "include",
-        
+// Middleware para permitir requisições JSON
+app.use(express.json());
+
+// Conectando ao MongoDB
+mongoose.connect('mongodb://localhost:27017/transport', { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log("Conectado ao MongoDB"))
+    .catch((err) => console.error("Erro ao conectar:", err));
+
+// Definindo rotas
+app.use('/api/stops', stopRoutes);
+
+// Função para importar dados do arquivo stops.txt para o banco de dados
+async function importarDados() {
+    fs.readFile('stops.txt', 'utf8', async (err, data) => {
+        if (err) {
+            console.error("Erro ao ler o arquivo:", err);
+            return;
+        }
+
+        const linhas = data.split('\n');
+        const novosDados = [];
+
+        for (const linha of linhas) {
+            const campos = linha.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+            if (campos && campos.length === 5) {
+                const [stop_id, stop_name, stop_desc, stop_lat, stop_lon] = campos.map(campo => campo.replace(/"/g, '').trim());
+                novosDados.push({
+                    stop_id, stop_name, stop_desc, 
+                    stop_lat: parseFloat(stop_lat), 
+                    stop_lon: parseFloat(stop_lon)
+                });
+            }
+        }
+
+        try {
+            await Stop.deleteMany({});
+            console.log("Todos os documentos antigos foram excluídos.");
+            await Stop.insertMany(novosDados);
+            console.log("Novos dados inseridos com sucesso!");
+        } catch (err) {
+            console.error("Erro ao importar dados:", err);
+        }
     });
-    cookies = response.headers.get("set-cookie");
-    
-
-    const isAuthenticated = await response.json();
-    if (isAuthenticated) {
-        console.log("Autenticado com sucesso!");
-        
-        
-    } else {
-        console.log("Falha na autenticação.");
-    }
-
-
 }
 
-async function obterPrevisao(pontoParada) {
-  try {
-      await autenticar();
+// Chama a função para importar dados ao iniciar o servidor
+importarDados();
 
-      const response = await fetch(`${API_URL}/Previsao/Parada?codigoParada=${pontoParada}`, {
-          method: "GET",
-          headers: {
-              "Cookie": cookies
-          }
-      });
-
-      if (!response.ok) {
-          throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
-      }
-
-      let data = await response.json();
-       JSON.stringify(data, null, 2);
-
-      
-      if (!data || !data.p || !data.p.l) {
-        console.error("❌ Erro: Estrutura do JSON inválida");
-        return null;
-    }
-
- 
-   
-    const { py, px, l: linhas } = data.p;
-
-    const calcularTempoChegada = (horario) => {
-        if (!horario) return "Sem previsão";
-    
-        const agora = new Date();
-        const [horas, minutos] = horario.split(":").map(Number);
-        const horarioPrevisto = new Date(agora);
-        horarioPrevisto.setHours(horas, minutos, 0, 0);
-    
-        const diffMs = horarioPrevisto - agora;
-        const diffMinutos = Math.round(diffMs / 60000); // Converte ms para minutos
-    
-        return diffMinutos > 0 ? `${diffMinutos} min` : "Chegando agora";
-    };
-    
-    const resultado = {
-        py,
-        px,
-        linhas: linhas.map(linha => {
-            const veiculos = linha.vs?.slice(0, 3).map(veiculo => ({
-                numero: veiculo.p || "N/A",
-                chegada: calcularTempoChegada(veiculo.t) // 🔥 Agora exibe só a "chegada"
-            })) || [];
-    
-            return {
-                c: linha.c,
-                lt: linha.sl === 2 ? linha.lt1 : linha.lt0,
-                veiculos: veiculos.length > 0 ? veiculos : [{ numero: "N/A", chegada: "N/A" }]
-            };
-        })
-    };
-    
-    // 🔥 Exibe o JSON formatado corretamente
-    console.log("🚍 Dados filtrados (Final):", JSON.stringify(resultado, null, 2));
-    
-    return resultado;
-
-
-
-  } catch (error) {
-      console.error("Erro ao obter previsão:", error.message);
-      return null;
-  }
-}
-
-obterPrevisao(660010587);
-
-
-app.get("/proximos-onibus", async (req, res) => {
-    const { paradaId } = req.query; // Recebe o ID da parada a partir da query string
-  
-    if (!paradaId) {
-      return res.status(400).json({ erro: "O ID da parada é necessário." });
-    }
-  
-    const previsao = await obterPrevisao(paradaId);
-  
-    if (!previsao) {
-      return res.status(500).json({ erro: "Erro ao obter dados dos ônibus." });
-    }
-  
-    const resultado = previsao.p.l.map((linha) => ({
-      linha: linha.c,
-      veiculos: linha.vs.map((veiculo) => ({
-        numero: veiculo.p || "N/A",
-        chegada: veiculo.t || "N/A",
-      })),
-    }));
-  
-    res.json(resultado);
-  });
-  
-  app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
-  });
-
+// Iniciando o servidor
+app.listen(port, () => {
+    console.log(`Servidor rodando na porta ${port}`);
+});

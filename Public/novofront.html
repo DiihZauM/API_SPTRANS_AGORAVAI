@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Previsão de Ônibus</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            padding: 20px;
+        }
+        h1 {
+            color: #3b3b3b;
+            text-align: center;
+            font-size: 2.5em;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .search-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        #nomeRua {
+            padding: 10px;
+            font-size: 1.2em;
+            width: 60%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        #buscarParadas {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            margin-left: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #buscarParadas:hover {
+            background-color: #0056b3;
+        }
+        .parada-lista {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .parada-item {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        .parada-item:hover {
+            transform: translateY(-5px);
+        }
+        .parada-item h3 {
+            color: #007bff;
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+        .parada-item p {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        .previsao {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 40px;
+        }
+        .previsao h3 {
+            color: #007bff;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+        .previsao ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .previsao li {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .previsao li .linha {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+        .previsao li .prefixo {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .previsao li .chegada {
+            font-size: 1.1em;
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Previsão de Chegada dos Ônibus</h1>
+
+    <!-- Campo de pesquisa -->
+    <div class="search-container">
+        <input type="text" id="nomeRua" placeholder="Digite o nome da rua" />
+        <button id="buscarParadas">Buscar Paradas</button>
+    </div>
+
+    <!-- Lista de paradas -->
+    <div class="parada-lista" id="paradaLista"></div>
+
+    <!-- Exibição da previsão -->
+    <div class="previsao" id="previsao"></div>
+</div>
+
+<script>
+    let paradas = [];  // Para armazenar as paradas que buscamos
+
+    // Função para buscar as paradas do backend
+    async function buscarParadas() {
+        const nomeRua = document.getElementById('nomeRua').value;
+        if (!nomeRua) {
+            alert('Por favor, insira o nome da rua.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:3000/paradas?nomeRua=${nomeRua}`);
+            const data = await response.json();
+            if (data.erro) {
+                alert(data.erro);
+                return;
+            }
+
+            paradas = data;  // Salva as paradas no estado
+            exibirParadas(data);
+        } catch (error) {
+            console.error("Erro ao buscar paradas:", error);
+            alert("Erro ao buscar paradas.");
+        }
+    }
+
+    // Função para exibir as paradas na tela
+    function exibirParadas(paradas) {
+        const lista = document.getElementById('paradaLista');
+        lista.innerHTML = '';  // Limpar a lista antes de adicionar novos itens
+
+        paradas.forEach(parada => {
+            const item = document.createElement('div');
+            item.classList.add('parada-item');
+            item.innerHTML = `
+                <h3>${parada.stop_name}</h3>
+                <p><strong>ID da Parada:</strong> ${parada.stop_id}</p>
+                <p><strong>Localização:</strong> (${parada.stop_lat}, ${parada.stop_lon})</p>
+                <button onclick="verPrevisao('${parada.stop_id}')">Ver Previsão</button>
+            `;
+            lista.appendChild(item);
+        });
+    }
+
+    // Função para buscar a previsão dos ônibus
+    async function verPrevisao(paradaId) {
+        try {
+            // Oculta as paradas
+            document.getElementById('paradaLista').style.display = 'none';
+            
+            const response = await fetch(`http://localhost:3000/proximos-onibus?paradaId=${paradaId}`);
+            const data = await response.json();
+            if (data.erro) {
+                alert(data.erro);
+                return;
+            }
+
+            exibirPrevisao(data);
+        } catch (error) {
+            console.error("Erro ao buscar previsão:", error);
+            alert("Erro ao buscar previsão.");
+        }
+    }
+
+    // Função para exibir a previsão de forma organizada
+    function exibirPrevisao(previsao) {
+        const previsaoDiv = document.getElementById('previsao');
+        previsaoDiv.innerHTML = '';  // Limpar previsões anteriores
+
+        const h3 = document.createElement('h3');
+        h3.innerHTML = 'Previsão de Chegada dos Ônibus:';
+        previsaoDiv.appendChild(h3);
+
+        const ul = document.createElement('ul');
+        previsao.linhas.forEach(linha => {
+            linha.veiculos.forEach(veiculo => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="linha">${linha.c} - ${linha.lt}</div>
+                    <div class="prefixo">Prefixo: ${veiculo.numero}</div>
+                    <div class="chegada">Chegada: ${veiculo.chegada}</div>
+                `;
+                ul.appendChild(li);
+            });
+        });
+
+        previsaoDiv.appendChild(ul);
+    }
+
+    // Adicionar evento de clique para buscar paradas
+    document.getElementById('buscarParadas').addEventListener('click', buscarParadas);
+</script>
+
+</body>
+</html>

@@ -262,6 +262,8 @@
         <option value="120011451">R. MMDC/ METRO BUTANTÃ</option>
         <option value="340015382">Ponto pra ver o 477P</option>
         <option value="6311381">Ponto pra ver o 771P/809D</option>
+        <option value="6311356">Ponto pra ver o 8610</option>
+        <option value="3407087">R. Michel Milan</option>
         <option value="personalizado">🔍 Personalizado</option>
     </select>
 
@@ -275,6 +277,8 @@
     <div id="resultado"></div>
 
     <script>
+          
+                
         document.addEventListener("DOMContentLoaded", function () {
            
             const menu = document.getElementById("sideMenu");
@@ -312,65 +316,77 @@
             const pesquisaDiv = document.getElementById('pesquisaPersonalizada');
             pesquisaDiv.style.display = select.value === "personalizado" ? "block" : "none";
         }
-  
-        async function buscarPrevisao() {
-            let paradaId = document.getElementById('pontoParada').value;
-            const codigoParada = document.getElementById('codigoParada').value.trim();
-
-            if (paradaId === "personalizado") {
-                if (!codigoParada || isNaN(codigoParada)) {
-                    alert("Digite um código de parada válido.");
-                    return;
-                }
-                paradaId = codigoParada;
+        window.onload = function() {
+            document.addEventListener("DOMContentLoaded", function () {
+                buscarPrevisao(); // Chama a função imediatamente ao carregar a página
+            });
+                setInterval(() => {
+                    buscarPrevisao();
+                }, 10000);
+            
             }
 
-            if (!paradaId) {
-                alert("Escolha um ponto ou digite um código de parada.");
-                return;
-            }
+            async function buscarPrevisao() {
+    let paradaId = document.getElementById('pontoParada').value;
+    const codigoParada = document.getElementById('codigoParada').value.trim();
 
-            const url = `http://localhost:3000/proximos-onibus?paradaId=${paradaId}`;
-
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`Erro ao buscar dados (${response.status})`);
-                const data = await response.json();
-
-                const resultadoDiv = document.getElementById('resultado');
-                resultadoDiv.innerHTML = '';
-
-                if (!data || !data.linhas || data.linhas.length === 0) {
-                    resultadoDiv.innerHTML = '<p>Nenhum ônibus encontrado.</p>';
-                    return;
-                }
-
-                let chegadas = [];
-                data.linhas.forEach(linha => {
-                    linha.veiculos.forEach(veiculo => {
-                        chegadas.push({
-                            linha: linha.c,
-                            destino: linha.lt,
-                            veiculo: veiculo.numero.replace(/(\d)(?=\d{4}$)/, "$1 "),
-                            chegada: veiculo.chegada.includes("Chegando") ? 0 : parseInt(veiculo.chegada.replace(" min", "")) || 9999
-                        });
-                    });
-                });
-
-                chegadas.sort((a, b) => a.chegada - b.chegada);
-                chegadas.forEach(chegada => {
-                    const card = document.createElement('div');
-                    card.classList.add('card');
-                    card.innerHTML = `
-                        <strong>Linha:</strong> ${chegada.linha} (${chegada.destino})<br>
-                        <strong>Veículo:</strong> ${chegada.veiculo}<br>
-                        <strong>Chegada em:</strong> ${chegada.chegada === 0 ? "Chegando agora" : `${chegada.chegada} min`}`;
-                    resultadoDiv.appendChild(card);
-                });
-            } catch (error) {
-                alert("Erro ao buscar previsão dos ônibus.");
-            }
+    if (paradaId === "personalizado") {
+        if (!codigoParada || isNaN(codigoParada)) {
+            alert("Digite um código de parada válido.");
+            return;
         }
+        paradaId = codigoParada;
+    }
+
+    if (!paradaId) {
+        alert("Escolha um ponto ou digite um código de parada.");
+        return;
+    }
+
+    const url = `http://localhost:3000/proximos-onibus?paradaId=${paradaId}`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Erro ao buscar dados (${response.status})`);
+        
+        const data = await response.json();
+
+        const resultadoDiv = document.getElementById('resultado');
+        resultadoDiv.innerHTML = '';
+
+        // Verifica se a previsão não retornou dados
+        if (!data || !data.linhas || data.linhas.length === 0) {
+            resultadoDiv.innerHTML = '<p>Sem previsão de chegada.</p>';  // Exibe a mensagem de "Sem previsão"
+            return;
+        }
+
+        let chegadas = [];
+        data.linhas.forEach(linha => {
+            linha.veiculos.forEach(veiculo => {
+                chegadas.push({
+                    linha: linha.c,
+                    destino: linha.lt,
+                    veiculo: veiculo.numero.replace(/(\d)(?=\d{4}$)/, "$1 "),
+                    chegada: veiculo.chegada.includes("Chegando") ? 0 : parseInt(veiculo.chegada.replace(" min", "")) || 9999
+                });
+            });
+        });
+
+        chegadas.sort((a, b) => a.chegada - b.chegada);
+        chegadas.forEach(chegada => {
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.innerHTML = `
+                <strong>Linha:</strong> ${chegada.linha} (${chegada.destino})<br>
+                <strong>Veículo:</strong> ${chegada.veiculo}<br>
+                <strong>Chegada em:</strong> ${chegada.chegada === 0 ? "Chegando agora" : `${chegada.chegada} min`}`;
+            resultadoDiv.appendChild(card);
+        });
+    } catch (error) {
+        const resultadoDiv = document.getElementById('resultado');
+        resultadoDiv.innerHTML = '<h1 class= card>Sem previsão de chegada.</h1>';  // Exibe a mensagem caso haja erro
+    }
+}
     </script>
 </body>
 </html>
