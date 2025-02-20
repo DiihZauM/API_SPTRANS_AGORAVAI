@@ -179,6 +179,8 @@
   </div>
 
   <script>
+    
+
     function alternarModoNoturno() {
       const body = document.body;
       body.classList.toggle('escuro');
@@ -228,65 +230,136 @@
         alert('Erro ao buscar paradas.');
       }
     }
+    let intervaloAtualizacao = null;
+    let paradaAtual = null; // Para rastrear a parada selecionada
+
     async function verPrevisao(paradaId) {
-      try {
-        const response = await fetch(`http://localhost:3000/proximos-onibus?paradaId=${paradaId}`);
-        const data = await response.json();
+  try {
+    const response = await fetch(`http://localhost:3000/proximos-onibus?paradaId=${paradaId}`);
+    const data = await response.json();
 
-        if (data.erro) {
-          alert(data.erro);
-          return;
-        }
-
-        const listaPrevisoes = document.getElementById('listaPrevisoes');
-        listaPrevisoes.innerHTML = '';
-
-        if (!data.linhas || data.linhas.length === 0) {
-          listaPrevisoes.innerHTML = '<h3>Nenhuma previsão disponível.</h3>';
-        } else {
-          let veiculos = [];
-          data.linhas.forEach(linha => {
-            linha.veiculos.forEach(veiculo => {
-              veiculos.push({
-                numero: veiculo.numero,
-                chegada: veiculo.chegada,
-                linha: linha.c,
-                destino: linha.lt
-              });
-            });
-          });
-
-          veiculos.sort((a, b) => {
-            const tempoA = a.chegada === "agora" ? 0 : parseInt(a.chegada.split(" ")[0]);
-            const tempoB = b.chegada === "agora" ? 0 : parseInt(b.chegada.split(" ")[0]);
-            return tempoA - tempoB;
-          });
-
-          veiculos.forEach(veiculo => {
-            const item = document.createElement('div');
-            item.classList.add('previsao-item');
-            item.innerHTML = `
-              <h3>Linha: ${veiculo.linha} -  ${veiculo.destino}</h3>
-              <p><strong>Veículo: ${veiculo.numero}  </br> Chegada: ${veiculo.chegada}</strong></p>
-            `;
-            listaPrevisoes.appendChild(item);
-          });
-        }
-
-        document.getElementById('paradaLista').style.display = 'none';
-        document.getElementById('previsao').style.display = 'block';
-      } catch (error) {
-        console.error("Erro ao buscar previsões:", error);
-        alert("Erro ao buscar previsões.");
-      }
+    if (data.erro) {
+      alert(data.erro);
+      return;
     }
+
+    const listaPrevisoes = document.getElementById('listaPrevisoes');
+    listaPrevisoes.innerHTML = '';
+
+    if (!data.linhas || data.linhas.length === 0) {
+      listaPrevisoes.innerHTML = '<h3>Nenhuma previsão disponível.</h3>';
+    } else {
+      let veiculos = [];
+      data.linhas.forEach(linha => {
+        linha.veiculos.forEach(veiculo => {
+          veiculos.push({
+            numero: veiculo.numero,
+            chegada: veiculo.chegada,
+            linha: linha.c,
+            destino: linha.lt
+          });
+        });
+      });
+
+      veiculos.sort((a, b) => {
+        const tempoA = a.chegada === "agora" ? 0 : parseInt(a.chegada.split(" ")[0]);
+        const tempoB = b.chegada === "agora" ? 0 : parseInt(b.chegada.split(" ")[0]);
+        return tempoA - tempoB;
+      });
+
+      veiculos.forEach(veiculo => {
+        const item = document.createElement('div');
+        item.classList.add('previsao-item');
+        item.innerHTML = `  
+          <h3>Linha: ${veiculo.linha} - ${veiculo.destino}</h3>
+          <p><strong>Veículo: ${veiculo.numero} </br> Chegada: ${veiculo.chegada}</strong></p>
+        `;
+        listaPrevisoes.appendChild(item);
+      });
+    }
+
+    document.getElementById('paradaLista').style.display = 'none';
+    document.getElementById('previsao').style.display = 'block';
+  } catch (error) {
+    console.error("Erro ao buscar previsões:", error);
+    alert("Erro ao buscar previsões.");
+  }
+}
+
+function iniciarAtualizacao(paradaId) {
+  // Se já estamos mostrando previsões dessa parada, não faz nada
+  if (paradaAtual === paradaId) return;
+
+  // Atualiza a parada atual
+  paradaAtual = paradaId;
+
+  // Para o intervalo anterior, se existir
+  if (intervaloAtualizacao) {
+    clearInterval(intervaloAtualizacao);
+  }
+
+  // Chama a previsão imediatamente
+  verPrevisao(paradaId);
+
+  // Inicia o intervalo para atualizar a cada 10 segundos
+  intervaloAtualizacao = setInterval(() => {
+    verPrevisao(paradaId);
+  }, 10000);
+}
+
+async function buscarParadas() {
+  const nomeRua = document.getElementById('nomeRua').value.trim();
+  if (!nomeRua) {
+    alert('Por favor, insira o nome de uma rua.');
+    return;
+  }
+
+  try {
+    const response = await fetch(`http://localhost:3000/paradas?nomeRua=${nomeRua}`);
+    const data = await response.json();
+    const listaParadas = document.getElementById('listaParadas');
+    listaParadas.innerHTML = '';
+
+    data.forEach(parada => {
+      const li = document.createElement('li');
+      li.innerHTML = `${parada.stop_name}<br><small>${parada.stop_desc}</small>`;
+      li.onclick = () => iniciarAtualizacao(parada.stop_id); // Alteração aqui para chamar iniciarAtualizacao
+      listaParadas.appendChild(li);
+    });
+
+    document.getElementById('paradaLista').style.display = 'block';
+    document.getElementById('previsao').style.display = 'none';
+  } catch (error) {
+    console.error("Erro ao buscar paradas:", error);
+    alert('Erro ao buscar paradas.');
+  }
+}
+
+function voltarParaParadas() {
+  // Limpa o intervalo e reseta a parada atual
+  clearInterval(intervaloAtualizacao);
+  intervaloAtualizacao = null;
+  paradaAtual = null;
+
+  document.getElementById('paradaLista').style.display = 'block';
+  document.getElementById('previsao').style.display = 'none';
+}
+
+  // Chama imediatamente para evitar atraso inicial
+  verPrevisao(paradaId);
+
+  // Inicia o intervalo para atualizar a cada 10 segundos
+  intervaloAtualizacao = setInterval(() => {
+    verPrevisao(paradaId);
+  }, 10000);
 
 
     function voltarParaParadas() {
       document.getElementById('paradaLista').style.display = 'block';
       document.getElementById('previsao').style.display = 'none';
+      clearInterval(intervaloAtualizacao);
     }
-
+  
     document.getElementById('nomeRua').addEventListener('keypress', function(event) {
       if (event.key === 'Enter') {
         buscarParadas();

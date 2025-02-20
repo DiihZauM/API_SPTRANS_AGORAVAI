@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Rota para servir o HTML principal
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "proximos_onibus.html"));
+    res.sendFile(path.join(__dirname, "public", "novofront.html"));
 });
 
 // Função para buscar paradas por nome de rua
