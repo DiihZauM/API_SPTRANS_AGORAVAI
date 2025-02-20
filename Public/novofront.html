@@ -216,7 +216,7 @@
 
         data.forEach(parada => {
           const li = document.createElement('li');
-          li.textContent = `${parada.stop_name} - ${parada.street_name}`;
+          li.innerHTML = `${parada.stop_name}<br><small>${parada.stop_desc}</small>`;
           li.onclick = () => verPrevisao(parada.stop_id);
           listaParadas.appendChild(li);
         });
