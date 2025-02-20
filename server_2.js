@@ -111,7 +111,7 @@ async function obterPrevisao(pontoParada) {
 
             return diffMinutos > 0 ? `${diffMinutos} min` : "agora";
         };
-
+        
         const resultado = {
             py,
             px,
@@ -128,7 +128,7 @@ async function obterPrevisao(pontoParada) {
                 };
             })
         };
-
+        console.log(resultado);
         return resultado;
     } catch (error) {
         console.error("❌ Erro ao obter previsão:", error.message);

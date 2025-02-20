@@ -1,227 +1,297 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Previsão de Ônibus</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
-            padding: 20px;
-        }
-        h1 {
-            color: #3b3b3b;
-            text-align: center;
-            font-size: 2.5em;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .search-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        #nomeRua {
-            padding: 10px;
-            font-size: 1.2em;
-            width: 60%;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-        #buscarParadas {
-            padding: 10px 20px;
-            font-size: 1.2em;
-            margin-left: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        #buscarParadas:hover {
-            background-color: #0056b3;
-        }
-        .parada-lista {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .parada-item {
-            background-color: #ffffff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s;
-        }
-        .parada-item:hover {
-            transform: translateY(-5px);
-        }
-        .parada-item h3 {
-            color: #007bff;
-            font-size: 1.4em;
-            margin-bottom: 10px;
-        }
-        .parada-item p {
-            font-size: 1.1em;
-            margin-bottom: 10px;
-        }
-        .previsao {
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-top: 40px;
-        }
-        .previsao h3 {
-            color: #007bff;
-            font-size: 1.5em;
-            margin-bottom: 15px;
-        }
-        .previsao ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        .previsao li {
-            background-color: #f9f9f9;
-            border-radius: 5px;
-            padding: 15px;
-            margin: 10px 0;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-        .previsao li .linha {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #007bff;
-            margin-bottom: 5px;
-        }
-        .previsao li .prefixo {
-            font-size: 1.1em;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        .previsao li .chegada {
-            font-size: 1.1em;
-            color: #28a745;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Previsão de Chegada dos Ônibus</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.claro {
+      background-color: #f4f4f4;
+      color: #333;
+    }
+
+    body.escuro {
+      background-color: #1e1e1e;
+      color: #f4f4f4;
+    }
+
+    .container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.escuro .container {
+      background-color: #2c2c2c;
+      color: #f4f4f4;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    #nomeRua {
+      flex: 1;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.escuro #nomeRua {
+      background-color: #3a3a3a;
+      color: #fff;
+      border: 1px solid #555;
+    }
+
+    button {
+      padding: 10px 15px;
+      border-radius: 4px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    body.escuro button {
+      background-color: #6dbf6d;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      background-color: #e9ecef;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    li:hover {
+      background-color: #ccc;
+    }
+
+    body.escuro li {
+      background-color: #3a3a3a;
+    }
+
+    .previsao-item {
+      background-color: #fff;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    body.escuro .previsao-item {
+      background-color: #3a3a3a;
+    }
+
+    .voltar {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .voltar:hover {
+      background-color: #0056b3;
+    }
+
+    body.escuro .voltar {
+      background-color: #379eff;
+    }
+
+    .modo-noturno {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .modo-noturno button {
+      padding: 5px 10px;
+      border-radius: 4px;
+      background-color: #555;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .modo-noturno button:hover {
+      background-color: #333;
+    }
+  </style>
 </head>
-<body>
-
-<div class="container">
-    <h1>Previsão de Chegada dos Ônibus</h1>
-
-    <!-- Campo de pesquisa -->
-    <div class="search-container">
-        <input type="text" id="nomeRua" placeholder="Digite o nome da rua" />
-        <button id="buscarParadas">Buscar Paradas</button>
+<body class="claro">
+  <div class="container">
+    <div class="modo-noturno">
+      <button id="botao-modo" onclick="alternarModoNoturno()">🌙 Modo Noturno</button>
     </div>
+    <h1>Previsão de Chegada de Ônibus</h1>
+    <div class="search-box">
+      <input type="text" id="nomeRua" placeholder="Digite o nome da rua" />
+      <button onclick="buscarParadas()">Buscar Paradas</button>
+    </div>
+    <div id="paradaLista">
+      <h2>Paradas Encontradas</h2>
+      <ul id="listaParadas"></ul>
+    </div>
+    <div id="previsao" style="display:none;">
+      <h2>Previsão de Chegada</h2>
+      <div id="listaPrevisoes"></div>
+      <a class="voltar" onclick="voltarParaParadas()">Voltar</a>
+    </div>
+  </div>
 
-    <!-- Lista de paradas -->
-    <div class="parada-lista" id="paradaLista"></div>
+  <script>
+    function alternarModoNoturno() {
+      const body = document.body;
+      body.classList.toggle('escuro');
+      body.classList.toggle('claro');
+      const modoAtual = body.classList.contains('escuro') ? 'escuro' : 'claro';
+      localStorage.setItem('modo', modoAtual);
 
-    <!-- Exibição da previsão -->
-    <div class="previsao" id="previsao"></div>
-</div>
+      const botaoModo = document.getElementById('botao-modo');
+      botaoModo.textContent = modoAtual === 'escuro' ? '☀️ Modo Claro' : '🌙 Modo Noturno';
+    }
 
-<script>
-    let paradas = [];  // Para armazenar as paradas que buscamos
+    window.addEventListener('load', () => {
+      const modoSalvo = localStorage.getItem('modo');
+      if (modoSalvo) {
+        document.body.classList.remove('claro', 'escuro');
+        document.body.classList.add(modoSalvo);
 
-    // Função para buscar as paradas do backend
+        const botaoModo = document.getElementById('botao-modo');
+        botaoModo.textContent = modoSalvo === 'escuro' ? '☀️ Modo Claro' : '🌙 Modo Noturno';
+      }
+    });
+
     async function buscarParadas() {
-        const nomeRua = document.getElementById('nomeRua').value;
-        if (!nomeRua) {
-            alert('Por favor, insira o nome da rua.');
-            return;
-        }
+      const nomeRua = document.getElementById('nomeRua').value.trim();
+      if (!nomeRua) {
+        alert('Por favor, insira o nome de uma rua.');
+        return;
+      }
 
-        try {
-            const response = await fetch(`http://localhost:3000/paradas?nomeRua=${nomeRua}`);
-            const data = await response.json();
-            if (data.erro) {
-                alert(data.erro);
-                return;
-            }
+      try {
+        const response = await fetch(`http://localhost:3000/paradas?nomeRua=${nomeRua}`);
+        const data = await response.json();
+        const listaParadas = document.getElementById('listaParadas');
+        listaParadas.innerHTML = '';
 
-            paradas = data;  // Salva as paradas no estado
-            exibirParadas(data);
-        } catch (error) {
-            console.error("Erro ao buscar paradas:", error);
-            alert("Erro ao buscar paradas.");
-        }
-    }
-
-    // Função para exibir as paradas na tela
-    function exibirParadas(paradas) {
-        const lista = document.getElementById('paradaLista');
-        lista.innerHTML = '';  // Limpar a lista antes de adicionar novos itens
-
-        paradas.forEach(parada => {
-            const item = document.createElement('div');
-            item.classList.add('parada-item');
-            item.innerHTML = `
-                <h3>${parada.stop_name}</h3>
-                <p><strong>ID da Parada:</strong> ${parada.stop_id}</p>
-                <p><strong>Localização:</strong> (${parada.stop_lat}, ${parada.stop_lon})</p>
-                <button onclick="verPrevisao('${parada.stop_id}')">Ver Previsão</button>
-            `;
-            lista.appendChild(item);
+        data.forEach(parada => {
+          const li = document.createElement('li');
+          li.textContent = `${parada.stop_name} - ${parada.street_name}`;
+          li.onclick = () => verPrevisao(parada.stop_id);
+          listaParadas.appendChild(li);
         });
-    }
 
-    // Função para buscar a previsão dos ônibus
+        document.getElementById('paradaLista').style.display = 'block';
+        document.getElementById('previsao').style.display = 'none';
+      } catch (error) {
+        console.error("Erro ao buscar paradas:", error);
+        alert('Erro ao buscar paradas.');
+      }
+    }
     async function verPrevisao(paradaId) {
-        try {
-            // Oculta as paradas
-            document.getElementById('paradaLista').style.display = 'none';
-            
-            const response = await fetch(`http://localhost:3000/proximos-onibus?paradaId=${paradaId}`);
-            const data = await response.json();
-            if (data.erro) {
-                alert(data.erro);
-                return;
-            }
+      try {
+        const response = await fetch(`http://localhost:3000/proximos-onibus?paradaId=${paradaId}`);
+        const data = await response.json();
 
-            exibirPrevisao(data);
-        } catch (error) {
-            console.error("Erro ao buscar previsão:", error);
-            alert("Erro ao buscar previsão.");
+        if (data.erro) {
+          alert(data.erro);
+          return;
         }
-    }
 
-    // Função para exibir a previsão de forma organizada
-    function exibirPrevisao(previsao) {
-        const previsaoDiv = document.getElementById('previsao');
-        previsaoDiv.innerHTML = '';  // Limpar previsões anteriores
+        const listaPrevisoes = document.getElementById('listaPrevisoes');
+        listaPrevisoes.innerHTML = '';
 
-        const h3 = document.createElement('h3');
-        h3.innerHTML = 'Previsão de Chegada dos Ônibus:';
-        previsaoDiv.appendChild(h3);
-
-        const ul = document.createElement('ul');
-        previsao.linhas.forEach(linha => {
+        if (!data.linhas || data.linhas.length === 0) {
+          listaPrevisoes.innerHTML = '<h3>Nenhuma previsão disponível.</h3>';
+        } else {
+          let veiculos = [];
+          data.linhas.forEach(linha => {
             linha.veiculos.forEach(veiculo => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <div class="linha">${linha.c} - ${linha.lt}</div>
-                    <div class="prefixo">Prefixo: ${veiculo.numero}</div>
-                    <div class="chegada">Chegada: ${veiculo.chegada}</div>
-                `;
-                ul.appendChild(li);
+              veiculos.push({
+                numero: veiculo.numero,
+                chegada: veiculo.chegada,
+                linha: linha.c,
+                destino: linha.lt
+              });
             });
-        });
+          });
 
-        previsaoDiv.appendChild(ul);
+          veiculos.sort((a, b) => {
+            const tempoA = a.chegada === "agora" ? 0 : parseInt(a.chegada.split(" ")[0]);
+            const tempoB = b.chegada === "agora" ? 0 : parseInt(b.chegada.split(" ")[0]);
+            return tempoA - tempoB;
+          });
+
+          veiculos.forEach(veiculo => {
+            const item = document.createElement('div');
+            item.classList.add('previsao-item');
+            item.innerHTML = `
+              <h3>Linha: ${veiculo.linha} -  ${veiculo.destino}</h3>
+              <p><strong>Veículo: ${veiculo.numero}  </br> Chegada: ${veiculo.chegada}</strong></p>
+            `;
+            listaPrevisoes.appendChild(item);
+          });
+        }
+
+        document.getElementById('paradaLista').style.display = 'none';
+        document.getElementById('previsao').style.display = 'block';
+      } catch (error) {
+        console.error("Erro ao buscar previsões:", error);
+        alert("Erro ao buscar previsões.");
+      }
     }
 
-    // Adicionar evento de clique para buscar paradas
-    document.getElementById('buscarParadas').addEventListener('click', buscarParadas);
-</script>
 
+    function voltarParaParadas() {
+      document.getElementById('paradaLista').style.display = 'block';
+      document.getElementById('previsao').style.display = 'none';
+    }
+
+    document.getElementById('nomeRua').addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        buscarParadas();
+      }
+    });
+  </script>
 </body>
 </html>
